@@ -55,23 +55,13 @@ bool RETANGULO = false;
 
 ssd1306_t ssd;
 
-
 void PWM(uint led, uint *slice, uint16_t leveli);
-
-uint16_t leitura(uint8_t input); 
 
 void gpio_irq_handler(uint gpio, uint32_t events){
     uint32_t DEBOUNCE = to_us_since_boot(get_absolute_time());
     if(gpio == BOTAO_A || gpio == PB_JOYSTICK){
         if(DEBOUNCE - DEBOUNCE_TIME > 500000){
-            if(gpio == BOTAO_A){
-                pwm_set_enabled(SLICE_LED_AZUL, !ATIVO1);
-                pwm_set_enabled(SLICE_LED_VERMELHO, !ATIVO2);
-
-                LIGADO1 = !LIGADO1;                
-                ATIVO1 = !ATIVO1;
-                ATIVO2 = !ATIVO2;
-            }
+            //Acionamento pussbutton joystick
             if (gpio == PB_JOYSTICK){
                 gpio_put(11, !gpio_get(11));
                 LIGADO2 = !LIGADO2;
@@ -83,6 +73,15 @@ void gpio_irq_handler(uint gpio, uint32_t events){
                         BORDA2 = BORDA1;
                     } else BORDA1 = 0;
                 }
+            }
+            //Acionamento Botão A
+            if(gpio == BOTAO_A){
+                pwm_set_enabled(SLICE_LED_AZUL, !ATIVO1);
+                pwm_set_enabled(SLICE_LED_VERMELHO, !ATIVO2);
+
+                LIGADO1 = !LIGADO1;                
+                ATIVO1 = !ATIVO1;
+                ATIVO2 = !ATIVO2;
             }
     }
         DEBOUNCE_TIME = DEBOUNCE;
@@ -98,12 +97,12 @@ uint16_t leitura_adc = 0;
 return leitura_adc / 10;
 }
 
-void PWM(uint led, uint *slice, uint16_t leveli){
+void PWM(uint led, uint *slice, uint16_t level){
         gpio_set_function(led, GPIO_FUNC_PWM);
         *slice = pwm_gpio_to_slice_num(led);
         pwm_set_clkdiv(*slice, 16);
         pwm_set_wrap(*slice, 4096);
-        pwm_set_gpio_level(led, leveli);
+        pwm_set_gpio_level(led, level);
         pwm_set_enabled(*slice, true);          
     
 }
@@ -122,7 +121,7 @@ void main(){
     gpio_pull_up(PB_JOYSTICK);
     
     //Inicialização i2c display
-    i2c_init(I2C_PORT, 400*1000);
+    i2c_init(I2C_PORT, 400000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_pull_up(I2C_SDA);
 
@@ -188,7 +187,7 @@ void main(){
         if(BORDA1 == 1) 
             ssd1306_rect(&ssd, 4, 4, 124, 60, LIGADO2, false);
         if(BORDA1 == 2) 
-            ssd1306_rect(&ssd, 4, 4, 124, 60, !RETANGULO, false);
+          ssd1306_rect(&ssd, 4, 4, 124, 60, !RETANGULO, false);
         ssd1306_send_data(&ssd);
     }
 }
